@@ -33,6 +33,15 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
+    if (next && isSafeNext(next)) {
+      try {
+        const nextUrl = new URL(next);
+        if (nextUrl.pathname.startsWith('/invite/')) {
+          return NextResponse.redirect(next);
+        }
+      } catch {}
+    }
+    if (next) loginUrl.searchParams.set('next', next);
     loginUrl.searchParams.set('error', 'exchange_failed');
     return NextResponse.redirect(loginUrl);
   }
