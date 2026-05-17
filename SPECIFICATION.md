@@ -585,17 +585,17 @@ Managed via `vercel env pull .env.local` per `vercel:env-vars`.
 
 ---
 
-## 12. Migration Plan — Redis → Supabase
+## 12. Migration Plan — Redis → Supabase (✅ completed in Phase 5)
 
-The starter persists tenants as Redis keys `subdomain:{name} → { emoji, createdAt }`. Migration steps:
+The starter persisted tenants as Redis keys `subdomain:{name} → { emoji, createdAt }`. Completed in Phase 5:
 
-1. Add Supabase deps (`@supabase/supabase-js`, `@supabase/ssr`), run migrations in §4.
-2. Replace `lib/subdomains.ts` callers with `lib/tenants/queries.ts`. Keep the old file for one commit with a `@deprecated` JSDoc to make the diff reviewable.
-3. Replace `lib/redis.ts` import sites in `app/actions.ts` and `app/admin/dashboard.tsx`.
-4. Once green, delete `lib/redis.ts`, `lib/subdomains.ts`, and remove `@upstash/redis` from `package.json`.
-5. Remove `KV_REST_API_*` env vars.
+1. ✅ Supabase deps added (`@supabase/supabase-js`, `@supabase/ssr`); migrations 0001–0004 applied.
+2. ✅ `lib/tenants/queries.ts` (with `React.cache`-deduped reads) replaces `lib/subdomains.ts`.
+3. ✅ All Redis call sites swapped to Supabase: `app/page.tsx`, `app/admin/page.tsx`, `app/s/[subdomain]/page.tsx`.
+4. ✅ Deleted: `lib/redis.ts`, `lib/subdomains.ts`, `app/actions.ts`, `app/subdomain-form.tsx`, `components/ui/emoji-picker.tsx`. Removed packages: `@upstash/redis`, `frimousse`, `@radix-ui/react-dialog`, `@radix-ui/react-popover`.
+5. ✅ `KV_REST_API_*` removed from `.env.local.example`.
 
-The legacy "emoji per subdomain" feature is **dropped**, not migrated. The new schema has no `emoji` column; the welcome dashboard greets users by tenant name instead.
+The legacy "emoji per subdomain" feature was **dropped**, not migrated. The new schema has no `emoji` column; the welcome dashboard greets users by tenant name.
 
 ---
 

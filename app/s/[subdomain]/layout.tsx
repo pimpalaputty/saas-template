@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
+import { createClient } from '@/lib/supabase/server';
 import { getTenantBySlug } from '@/lib/tenants/queries';
 import { protocol, rootDomain } from '@/lib/utils';
 
@@ -13,7 +14,7 @@ export default async function TenantLayout({
 }) {
   const { subdomain } = await params;
 
-  await requireUser({
+  const user = await requireUser({
     next: `${protocol}://${subdomain}.${rootDomain}/`,
   });
 
@@ -25,6 +26,15 @@ export default async function TenantLayout({
     redirect(`${protocol}://${rootDomain}/no-access`);
   }
 
+  const supabase = await createClient();
+  const { data: membership } = await supabase
+    .from('memberships')
+    .select('role')
+    .eq('tenant_id', tenant.id)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  const isAdmin = membership?.role === 'admin';
+
   return (
     <div className="min-h-screen bg-white">
       <header className="border-b border-gray-200">
@@ -32,7 +42,12 @@ export default async function TenantLayout({
           <div className="text-sm font-semibold tracking-tight text-gray-900">
             {tenant.name}
           </div>
-          <nav className="flex items-center gap-4 text-sm text-gray-500">
+          <nav className="flex items-center gap-5 text-sm text-gray-500">
+            {isAdmin && (
+              <Link href="/settings" className="hover:text-gray-700">
+                Settings
+              </Link>
+            )}
             <Link
               href={`${protocol}://${rootDomain}/choose-tenant`}
               className="hover:text-gray-700"
