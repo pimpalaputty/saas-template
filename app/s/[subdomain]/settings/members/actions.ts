@@ -41,6 +41,27 @@ export async function inviteMemberAction(
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return { status: 'error', error: 'Not authenticated.' };
 
+    const { count: memberCount } = await supabase
+      .from('memberships')
+      .select('id, profiles!inner(email)', { count: 'exact', head: true })
+      .eq('tenant_id', tenant.id)
+      .eq('profiles.email', email);
+
+    if (memberCount && memberCount > 0) {
+      return { status: 'error', error: 'User is already a member of this workspace.' };
+    }
+
+    const { count: inviteCount } = await supabase
+      .from('invitations')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenant.id)
+      .eq('email', email)
+      .is('accepted_at', null);
+
+    if (inviteCount && inviteCount > 0) {
+      return { status: 'error', error: 'An invitation has already been sent to this email address.' };
+    }
+
     const { raw, hash } = generateInviteToken();
     const expiresAt = new Date(Date.now() + INVITE_TTL_MS).toISOString();
 
