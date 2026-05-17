@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { signInWithEmail } from '@/lib/auth/methods';
 import { validateSlug } from '@/lib/tenants/slug';
 import { protocol, rootDomain } from '@/lib/utils';
@@ -74,4 +75,20 @@ function slugErrorMessage(err: NonNullable<ReturnType<typeof validateSlug>>): st
     case 'reserved':
       return 'That subdomain is reserved. Please pick another.';
   }
+}
+
+export async function checkSlugAvailableAction(slug: string): Promise<boolean> {
+  if (!slug || validateSlug(slug)) return false;
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data } = await supabase
+    .from('tenants')
+    .select('id')
+    .eq('slug', slug.trim().toLowerCase())
+    .maybeSingle();
+
+  return !data; // Return true if no tenant found
 }

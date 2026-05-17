@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { slugify, validateSlug } from '@/lib/tenants/slug';
 import { rootDomain } from '@/lib/utils';
-import { startSignupAction, type SignupState } from './actions';
+import { startSignupAction, checkSlugAvailableAction, type SignupState } from './actions';
+import { Loader2 } from 'lucide-react';
 
 const INITIAL: SignupState = { status: 'idle' };
 
@@ -14,12 +15,40 @@ export function SignupForm() {
   const [state, action, isPending] = useActionState(startSignupAction, INITIAL);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
+  const [isSlugTaken, setIsSlugTaken] = useState(false);
   const slugDirty = useRef(false);
 
   // Live slug suggestion — stops as soon as the user manually edits the slug.
   useEffect(() => {
     if (!slugDirty.current) setSlug(slugify(name));
   }, [name]);
+
+  // Debounced slug check
+  useEffect(() => {
+    const s = slug.trim();
+    if (!s || validateSlug(s)) {
+      setIsSlugTaken(false);
+      setIsCheckingSlug(false);
+      return;
+    }
+
+    setIsCheckingSlug(true);
+    setIsSlugTaken(false);
+
+    const timer = setTimeout(async () => {
+      try {
+        const available = await checkSlugAvailableAction(s);
+        setIsSlugTaken(!available);
+      } catch {
+        setIsSlugTaken(false);
+      } finally {
+        setIsCheckingSlug(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [slug]);
 
   if (state.status === 'sent') {
     return (
@@ -68,27 +97,38 @@ export function SignupForm() {
       <div className="space-y-2">
         <Label htmlFor="slug">Subdomain</Label>
         <div className="flex items-center">
-          <Input
-            id="slug"
-            name="slug"
-            type="text"
-            required
-            maxLength={32}
-            placeholder="acme"
-            disabled={isPending}
-            value={slug}
-            onChange={(e) => {
-              slugDirty.current = true;
-              setSlug(e.target.value);
-            }}
-            className="rounded-r-none"
-            aria-invalid={!!slugErr}
-          />
+          <div className="relative flex-1 flex items-center">
+            <Input
+              id="slug"
+              name="slug"
+              type="text"
+              required
+              maxLength={32}
+              placeholder="acme"
+              disabled={isPending}
+              value={slug}
+              onChange={(e) => {
+                slugDirty.current = true;
+                setSlug(e.target.value);
+              }}
+              className="rounded-r-none pr-10 w-full"
+              aria-invalid={!!slugErr || isSlugTaken}
+            />
+            {isCheckingSlug && (
+              <div className="absolute right-3">
+                <Loader2 className="h-4 w-4 animate-spin text-muted" />
+              </div>
+            )}
+          </div>
           <span className="flex h-14 items-center rounded-r-[8px] border border-l-0 border-input bg-surface-soft px-3 text-base text-muted shadow-sm">
             .{rootDomain}
           </span>
         </div>
-        {slugErr && <SlugError error={slugErr} />}
+        {slugErr ? (
+          <SlugError error={slugErr} />
+        ) : isSlugTaken ? (
+          <p className="text-xs text-red-600">That subdomain is already taken.</p>
+        ) : null}
       </div>
 
       {state.status === 'error' && (
@@ -98,7 +138,7 @@ export function SignupForm() {
       <Button
         type="submit"
         className="w-full"
-        disabled={isPending || !!slugErr || !name || !slug}
+        disabled={isPending || !!slugErr || isSlugTaken || isCheckingSlug || !name || !slug}
       >
         {isPending ? 'Sending magic link…' : 'Continue'}
       </Button>
