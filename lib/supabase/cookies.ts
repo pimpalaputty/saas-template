@@ -3,17 +3,21 @@ import type { CookieOptions } from '@supabase/ssr';
 /**
  * Cookie options shared by every Supabase client in this app.
  *
- * The `domain` is the critical bit: in production we set it to the apex
- * (`.domain.com` with the leading dot) so the auth cookie is sent to
- * `domain.com` AND every `*.domain.com` subdomain — a single login session
- * works across the whole platform.
+ * `domain` is set to a leading-dot apex (e.g. `.domain.com`, `.lvh.me`) so
+ * the auth cookie is sent to the apex AND every `*.apex` subdomain — a
+ * single login session works across the whole platform.
  *
- * In development on `localhost` we leave `domain` undefined; browsers share
- * cookies across `*.localhost` automatically when no explicit domain is set.
+ * Plain `localhost` and IP literals are exceptions: browsers refuse to set
+ * `Domain=localhost`, and we have no real apex to anchor on. In that mode
+ * the cookie is host-only and DOES NOT share across `*.localhost`
+ * subdomains. Use a wildcard-resolvable domain like `lvh.me` for local dev
+ * (NEXT_PUBLIC_ROOT_DOMAIN=lvh.me:3000) — it points at 127.0.0.1 via DNS
+ * and behaves identically to production cookie-wise.
+ *
+ * `secure` is true only in production (HTTPS); secure cookies would never
+ * be transmitted over http://lvh.me:3000 in dev.
  */
 function apexCookieDomain(): string | undefined {
-  if (process.env.NODE_ENV !== 'production') return undefined;
-
   const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN;
   if (!root) return undefined;
 

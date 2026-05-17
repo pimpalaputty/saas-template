@@ -407,19 +407,17 @@ sequenceDiagram
 ```
 
 ### 6.2 Cookie scope (critical detail)
-Supabase SSR cookies must be set with `Domain=.domain.com` (leading dot) so they are sent to both `domain.com` and every `*.domain.com`. This is configured in the `@supabase/ssr` cookie options:
+Supabase SSR cookies must be set with `Domain=.<apex>` (leading dot) so they are sent to both the apex and every subdomain. This is configured in `@supabase/ssr`'s `cookieOptions`. The actual logic lives in `lib/supabase/cookies.ts`; the rule it encodes:
 
-```ts
-// lib/supabase/cookies.ts (target shape)
-export const cookieOptions = {
-  domain: process.env.NODE_ENV === 'production' ? '.domain.com' : undefined,
-  path: '/',
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-};
-```
+| `NEXT_PUBLIC_ROOT_DOMAIN`        | `cookieOptions.domain` | Notes                                    |
+|----------------------------------|------------------------|------------------------------------------|
+| `domain.com` (prod)              | `.domain.com`          | Shared across apex + all subdomains.     |
+| `lvh.me:3000` (recommended dev)  | `.lvh.me`              | Shared across `*.lvh.me`; lvh.me's DNS resolves every subdomain to `127.0.0.1`. |
+| `localhost:3000`                 | `undefined` (host-only) | **Does NOT share across `*.localhost`.** Browsers reject `Domain=localhost`; there is no apex-level dot. Use lvh.me locally. |
 
-In development, `.localhost` is not honored by browsers as a cookie domain, but cookies set without an explicit domain on `localhost` and `*.localhost` are shared because they share the eTLD+1. This works automatically.
+`secure: true` is only set in production (over HTTPS); a secure cookie would never be transmitted over `http://lvh.me:3000` in dev.
+
+**Why not just use localhost?** Cookies set on `localhost` (no explicit Domain) are host-only — they don't transfer to `acme.localhost`. The cross-subdomain magic-link flow therefore *cannot* work on `*.localhost` and the cleanest fix is the well-known wildcard-on-127.0.0.1 domain `lvh.me`. No `/etc/hosts` edits required.
 
 ### 6.3 Centralized login redirect
 - A user lands on `acme.domain.com/anything` with no session.

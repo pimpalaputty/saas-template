@@ -106,8 +106,9 @@ const { data } = await admin.from('projects').select('*');  // bypasses RLS
 ## 5. Authentication Rules
 
 - Magic links only in v0.1. To add a provider (e.g., Google), extend `lib/auth/methods.ts` — do not bypass it.
-- The auth cookie must be set with `Domain=.<root domain>` in production so subdomains share the session. Use `lib/supabase/cookies.ts`; do not hand-roll cookie options elsewhere.
-- The `next` parameter on `/login` and `/auth/callback` must be validated against `*.domain.com` before any redirect. **Never** redirect to an arbitrary URL — that is an open-redirect vulnerability.
+- The auth cookie must be set with `Domain=.<apex>` (leading dot) whenever the apex is a real domain, so subdomains share the session. Use `lib/supabase/cookies.ts`; do not hand-roll cookie options elsewhere.
+- **Local development must use `lvh.me`** (`NEXT_PUBLIC_ROOT_DOMAIN=lvh.me:3000`), not `localhost`. Plain `localhost` cookies are host-only and won't transfer to `acme.localhost`; lvh.me has wildcard DNS pointing to 127.0.0.1 and honors `Domain=.lvh.me`. No `/etc/hosts` edits.
+- The `next` parameter on `/login` and `/auth/callback` must be validated against the apex (`<root>` or `*.<root>`) before any redirect. **Never** redirect to an arbitrary URL — that is an open-redirect vulnerability.
 - The first superadmin is bootstrapped via SQL only; never expose a "grant superadmin" button to the application.
 
 ---
@@ -162,7 +163,8 @@ If any of those five are missing, the role is not real.
 1. **"Logged in on apex but not on subdomain"** — Cookie domain is not `.domain.com`. Check `lib/supabase/cookies.ts`. Locally on `localhost`, cookies share automatically; in prod the leading-dot domain is mandatory.
 2. **"User can see another tenant's data in dev tools"** — A query in a Server Action is using the service-role client. Grep for `createAdminClient` / `service_role` in any path reachable from a route.
 3. **"RLS policy is infinite-looping"** — A policy queries a table whose policy queries the first table. Move the cross-table check into a `security definer` helper.
-4. **"`acme.localhost:3000` redirects to login forever"** — Cookies set on `localhost` may not be visible on `acme.localhost` if cookie options include `domain: 'localhost'`. Leave `domain` undefined locally.
+4. **"`acme.localhost:3000` redirects to login forever"** — Cookies set on `localhost` are host-only and never reach `acme.localhost`. Switch local dev to `lvh.me:3000` (see §5). If you must stay on `localhost`, accept that you re-auth per subdomain in dev.
+4b. **"HTTP 431 on `xxx.lvh.me:3000` or `xxx.localhost:3000`"** — Node's default `--max-http-header-size` (16 KB) was exceeded by accumulated cookies. The `dev` script in `package.json` already bumps this to 64 KB via `NODE_OPTIONS`. If you still hit it, clear cookies for the apex in your browser.
 5. **"Magic link 404s on callback"** — `emailRedirectTo` is missing the apex domain or includes a subdomain. It must always be `https://domain.com/auth/callback?next=...`.
 6. **"Server Action throws Cookie modification not allowed"** — You called `cookies().set(...)` from a Server Component. Move the call to a Server Action or Route Handler.
 
