@@ -27,11 +27,11 @@ export default async function TenantWelcomePage({
   if (!tenant) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
+    <div className="mx-auto max-w-[672px] px-4 py-16 font-sans">
+      <h1 className="text-3xl font-bold tracking-tight text-ink">
         Welcome to {tenant.name}
       </h1>
-      <p className="mt-3 text-sm text-gray-600">
+      <p className="mt-3 text-sm text-muted">
         Your workspace is ready. This is your blank canvas — start building.
       </p>
     </div>

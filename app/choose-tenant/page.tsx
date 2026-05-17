@@ -29,13 +29,13 @@ export default async function ChooseTenantPage() {
   const tenants: TenantRow[] = (data ?? []) as TenantRow[];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4 text-ink font-sans">
+      <div className="w-full max-w-[448px] space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">
             Pick a workspace
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted">
             {tenants.length === 0
               ? "You're not a member of any workspace yet."
               : `You're a member of ${tenants.length} workspace${tenants.length === 1 ? '' : 's'}.`}
@@ -49,13 +49,13 @@ export default async function ChooseTenantPage() {
         )}
 
         {tenants.length === 0 ? (
-          <div className="rounded-lg bg-white p-6 text-center shadow-md">
-            <p className="text-sm text-gray-600">
+          <div className="rounded-[14px] bg-surface p-6 text-center shadow-airbnb border border-border">
+            <p className="text-sm text-muted">
               Create one to get started.
             </p>
             <Link
               href={`${protocol}://${rootDomain}/signup`}
-              className="mt-4 inline-block text-sm text-blue-600 hover:underline"
+              className="mt-4 inline-block text-sm text-primary hover:underline"
             >
               Create a new workspace →
             </Link>
@@ -66,10 +66,10 @@ export default async function ChooseTenantPage() {
               <li key={t.id}>
                 <a
                   href={`${protocol}://${t.slug}.${rootDomain}`}
-                  className="block rounded-lg bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                  className="block rounded-[14px] bg-surface border border-border p-4 shadow-sm transition-shadow hover:shadow-airbnb"
                 >
-                  <div className="font-medium">{t.name}</div>
-                  <div className="text-xs text-gray-500">
+                  <div className="font-medium text-ink">{t.name}</div>
+                  <div className="text-xs text-muted mt-1">
                     {t.slug}.{rootDomain}
                   </div>
                 </a>
@@ -86,7 +86,7 @@ export default async function ChooseTenantPage() {
             await signOut();
             redirect(`${protocol}://${rootDomain}/login`);
           }}>
-            <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+            <button type="submit" className="text-sm font-medium text-muted hover:text-ink transition-colors">
               Log out
             </button>
           </form>

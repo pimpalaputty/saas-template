@@ -16,17 +16,17 @@ export default async function LoginPage({
   const { next, error } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4 text-ink font-sans">
+      <div className="w-full max-w-[448px] space-y-6">
         <div className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-ink">
             Sign in to {rootDomain}
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-muted">
             We'll email you a magic link — no password needed.
           </p>
         </div>
-        <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-[14px] bg-surface p-6 shadow-airbnb border border-border">
           <LoginForm next={next} />
           {error && (
             <p className="mt-3 text-sm text-red-600">

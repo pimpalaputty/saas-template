@@ -39,7 +39,7 @@ export default async function InvitePage({
   if (error || !invitation) {
     return (
       <CenteredCard title="Invitation not found">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           This invitation link is invalid or has been revoked.
         </p>
         <BackHome />
@@ -50,7 +50,7 @@ export default async function InvitePage({
   if (invitation.accepted_at) {
     return (
       <CenteredCard title="Already accepted">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           This invitation has already been used.
         </p>
         <BackHome />
@@ -61,7 +61,7 @@ export default async function InvitePage({
   if (new Date(invitation.expires_at) < new Date()) {
     return (
       <CenteredCard title="Invitation expired">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Ask an admin of <strong>{invitation.tenant_name}</strong> for a new link.
         </p>
         <BackHome />
@@ -73,12 +73,12 @@ export default async function InvitePage({
     const next = `${protocol}://${rootDomain}/invite/${token}`;
     return (
       <CenteredCard title={`Join ${invitation.tenant_name}`}>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           Sign in with <strong>{invitation.email}</strong> to accept this invitation.
         </p>
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}
-          className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex h-12 items-center justify-center rounded-[8px] bg-primary px-6 text-base font-medium text-primary-foreground hover:bg-primary/90"
         >
           Sign in
         </Link>
@@ -89,7 +89,7 @@ export default async function InvitePage({
   if (user.email.toLowerCase() !== invitation.email.toLowerCase()) {
     return (
       <CenteredCard title="Email mismatch">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted">
           This invitation was sent to <strong>{invitation.email}</strong>, but
           you're signed in as <strong>{user.email}</strong>. Sign out and try
           again with the correct email.
@@ -101,7 +101,7 @@ export default async function InvitePage({
 
   return (
     <CenteredCard title={`Join ${invitation.tenant_name}`}>
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-muted">
         You've been invited to join <strong>{invitation.tenant_name}</strong> as a{' '}
         <strong>{invitation.role}</strong>.
       </p>
@@ -118,9 +118,9 @@ function CenteredCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
-      <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-md">
-        <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+    <div className="flex min-h-screen items-center justify-center bg-canvas p-4 font-sans text-ink">
+      <div className="w-full max-w-[448px] space-y-4 rounded-[14px] bg-surface p-6 shadow-airbnb border border-border">
+        <h1 className="text-xl font-bold tracking-tight text-ink">{title}</h1>
         {children}
       </div>
     </div>
@@ -129,7 +129,7 @@ function CenteredCard({
 
 function BackHome() {
   return (
-    <Link href="/" className="inline-block text-sm text-blue-600 hover:underline">
+    <Link href="/" className="inline-block text-sm font-medium text-primary hover:underline">
       ← Back to {rootDomain}
     </Link>
   );

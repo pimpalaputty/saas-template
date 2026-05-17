@@ -27,21 +27,21 @@ export default async function TenantSettingsPage({
   await requireRole(tenant.id, 'admin');
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
+    <div className="mx-auto max-w-[672px] px-4 py-12 font-sans">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Settings</h1>
         <Link
           href={`/settings/members`}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm font-medium text-primary hover:underline"
         >
           Members →
         </Link>
       </div>
 
-      <section className="rounded-lg border border-gray-200 bg-white p-6">
-        <h2 className="mb-1 text-base font-medium">General</h2>
-        <p className="mb-4 text-sm text-gray-600">
-          Subdomain: <code className="text-gray-900">{tenant.slug}.{rootDomain}</code>
+      <section className="rounded-[14px] border border-border bg-surface p-6 shadow-airbnb">
+        <h2 className="mb-1 text-base font-semibold text-ink">General</h2>
+        <p className="mb-4 text-sm text-muted">
+          Subdomain: <code className="text-ink">{tenant.slug}.{rootDomain}</code>
         </p>
         <SettingsForm subdomain={tenant.slug} initialName={tenant.name} />
       </section>

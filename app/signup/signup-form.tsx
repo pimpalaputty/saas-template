@@ -24,10 +24,10 @@ export function SignupForm() {
   if (state.status === 'sent') {
     return (
       <div className="space-y-2 text-center">
-        <h2 className="text-lg font-medium">Check your email</h2>
-        <p className="text-sm text-gray-600">
+        <h2 className="text-lg font-medium text-ink">Check your email</h2>
+        <p className="text-sm text-muted">
           We sent a magic link to <strong>{state.email}</strong>. Click it to
-          finish creating <strong>{slug}.{rootDomain}</strong>.
+          finish creating <strong className="text-ink">{slug}.{rootDomain}</strong>.
         </p>
       </div>
     );
@@ -84,7 +84,7 @@ export function SignupForm() {
             className="rounded-r-none"
             aria-invalid={!!slugErr}
           />
-          <span className="flex min-h-9 items-center rounded-r-md border border-l-0 border-input bg-gray-100 px-3 text-sm text-gray-500">
+          <span className="flex h-14 items-center rounded-r-[8px] border border-l-0 border-input bg-surface-soft px-3 text-base text-muted shadow-sm">
             .{rootDomain}
           </span>
         </div>
