@@ -110,13 +110,10 @@ export async function proxy(request: NextRequest) {
       );
     }
 
-    // Rewrite the subdomain root to the tenant route group.
-    if (pathname === '/') {
-      const rewrite = NextResponse.rewrite(new URL(`/s/${subdomain}`, request.url));
-      return copyCookies(rewrite, response);
-    }
-
-    return response;
+    // Rewrite all subdomain paths to the tenant route group.
+    const url = request.nextUrl.clone();
+    url.pathname = `/s/${subdomain}${pathname === '/' ? '' : pathname}`;
+    return copyCookies(NextResponse.rewrite(url), response);
   }
 
   // ── Apex domain ─────────────────────────────────────────────────────────
