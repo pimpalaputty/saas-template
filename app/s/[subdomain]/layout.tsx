@@ -54,6 +54,16 @@ export default async function TenantLayout({
             >
               Switch workspace
             </Link>
+            <form action={async () => {
+              'use server';
+              const { signOut } = await import('@/lib/auth/methods');
+              await signOut();
+              redirect(`${protocol}://${rootDomain}/login`);
+            }}>
+              <button type="submit" className="hover:text-gray-700">
+                Log out
+              </button>
+            </form>
           </nav>
         </div>
       </header>

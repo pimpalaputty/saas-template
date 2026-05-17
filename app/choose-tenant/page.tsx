@@ -77,6 +77,20 @@ export default async function ChooseTenantPage() {
             ))}
           </ul>
         )}
+
+        <div className="text-center mt-6">
+          <form action={async () => {
+            'use server';
+            const { signOut } = await import('@/lib/auth/methods');
+            const { redirect } = await import('next/navigation');
+            await signOut();
+            redirect(`${protocol}://${rootDomain}/login`);
+          }}>
+            <button type="submit" className="text-sm text-gray-500 hover:text-gray-700">
+              Log out
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
