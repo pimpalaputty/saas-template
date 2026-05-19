@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { signInWithEmail } from '@/lib/auth/methods';
 import { validateSlug } from '@/lib/tenants/slug';
 import { protocol, rootDomain } from '@/lib/utils';
@@ -77,18 +77,23 @@ function slugErrorMessage(err: NonNullable<ReturnType<typeof validateSlug>>): st
   }
 }
 
+/**
+ * Slug-availability probe for the unauthenticated signup form.
+ *
+ * Uses the `public.is_slug_available()` SQL function — a `security definer`
+ * wrapper that exposes only a single boolean. This is the only safe way to
+ * answer "is this slug taken?" before the user has a session, because RLS on
+ * `tenants` hides every row from the anon role. Never reach for the service-
+ * role key here (CLAUDE.md §0).
+ */
 export async function checkSlugAvailableAction(slug: string): Promise<boolean> {
   if (!slug || validateSlug(slug)) return false;
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-  const { data } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('slug', slug.trim().toLowerCase())
-    .maybeSingle();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('is_slug_available', {
+    p_slug: slug.trim().toLowerCase(),
+  });
 
-  return !data; // Return true if no tenant found
+  if (error) return false;
+  return data === true;
 }

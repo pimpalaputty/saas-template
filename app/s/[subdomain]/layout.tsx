@@ -1,9 +1,16 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/session';
+import { signOut } from '@/lib/auth/methods';
 import { createClient } from '@/lib/supabase/server';
 import { getTenantBySlug } from '@/lib/tenants/queries';
 import { protocol, rootDomain } from '@/lib/utils';
+
+async function signOutAction() {
+  'use server';
+  await signOut();
+  redirect(`${protocol}://${rootDomain}/login`);
+}
 
 export default async function TenantLayout({
   children,
@@ -54,12 +61,7 @@ export default async function TenantLayout({
             >
               Switch workspace
             </Link>
-            <form action={async () => {
-              'use server';
-              const { signOut } = await import('@/lib/auth/methods');
-              await signOut();
-              redirect(`${protocol}://${rootDomain}/login`);
-            }}>
+            <form action={signOutAction}>
               <button type="submit" className="hover:text-gray-700">
                 Log out
               </button>

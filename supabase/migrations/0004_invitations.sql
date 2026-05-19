@@ -5,8 +5,7 @@
 -- The RLS policies on `invitations` are admin-only (0002_rls.sql), so an
 -- invitee — who is not yet a member — cannot select their own row. These
 -- security-definer functions provide a narrow read/write path that returns
--- only the data needed for the invitation flow.
--- Source of truth: SPECIFICATION.md §9.2.
+-- only the data needed for the invitation flow. See CLAUDE.md §4.5.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- get_invitation_by_hash: look up an invitation by its sha-256 token hash

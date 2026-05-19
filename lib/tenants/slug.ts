@@ -1,8 +1,9 @@
 import { isReservedSubdomain } from './reserved';
 
 /**
- * SPECIFICATION.md §3.4 — slugs are lowercase, 3–32 chars, alphanumeric and
- * hyphens, no leading/trailing hyphen.
+ * Slugs are lowercase, 3–32 chars, alphanumeric and hyphens, no leading or
+ * trailing hyphen. The same regex appears in the `tenants.slug` CHECK
+ * constraint (0001_init.sql) — keep them in sync.
  */
 export const SLUG_REGEX = /^[a-z0-9](?:[a-z0-9-]{1,30}[a-z0-9])?$/;
 
@@ -24,8 +25,6 @@ export function validateSlug(slug: string): SlugValidationError | null {
  * Suggest a slug from a free-text tenant name. Used by the signup form
  * (client-side, on every `name` keystroke before the user has manually
  * edited the slug field) and by the server as a fallback.
- *
- * SPECIFICATION.md §9.1 documents the algorithm; keep them in sync.
  */
 export function slugify(name: string): string {
   const base = name

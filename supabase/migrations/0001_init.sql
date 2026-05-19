@@ -1,7 +1,7 @@
 -- 0001_init.sql
 -- Initial schema: enums, tables, indexes.
--- Source of truth: SPECIFICATION.md §4. Identifiers are lowercase per
--- supabase-postgres-best-practices/schema-lowercase-identifiers.
+-- Identifiers are lowercase per supabase-postgres-best-practices/schema-lowercase-identifiers.
+-- See CLAUDE.md §4 for the rules every tenant-scoped table must follow.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Enums

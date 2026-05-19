@@ -19,12 +19,9 @@ export function SignupForm() {
   const [isSlugTaken, setIsSlugTaken] = useState(false);
   const slugDirty = useRef(false);
 
-  // Live slug suggestion — stops as soon as the user manually edits the slug.
-  useEffect(() => {
-    if (!slugDirty.current) setSlug(slugify(name));
-  }, [name]);
-
-  // Debounced slug check
+  // Debounced slug check. Async work that can't run synchronously in a handler
+  // belongs in an effect; the slug derivation from `name` does not (see the
+  // name input's onChange below).
   useEffect(() => {
     const s = slug.trim();
     if (!s || validateSlug(s)) {
@@ -90,7 +87,15 @@ export function SignupForm() {
           placeholder="Acme Inc."
           disabled={isPending}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            const newName = e.target.value;
+            setName(newName);
+            // Derive the slug here rather than in a `useEffect([name])`. The
+            // derivation is a pure sync transformation of the value the user
+            // just typed — running it in the same handler avoids an extra
+            // render cycle.
+            if (!slugDirty.current) setSlug(slugify(newName));
+          }}
         />
       </div>
 

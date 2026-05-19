@@ -1,9 +1,9 @@
 -- 0003_triggers.sql
 -- Behavioral triggers:
 --   1. on_auth_user_created → auto-create a public.profiles row.
---   2. on_tenant_created    → make the creator the first admin.
+--   2. on_tenant_created    → make the creator the first admin (prevents
+--      the "orphan tenant" race; see CLAUDE.md §13 D3).
 -- Both are SECURITY DEFINER so they bypass RLS on the rows they insert.
--- Source of truth: SPECIFICATION.md §4.2 and §5.2.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- handle_new_user: mirrors auth.users → public.profiles on signup.

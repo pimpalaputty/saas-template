@@ -1,11 +1,15 @@
 -- 0002_rls.sql
 -- Row Level Security: helper functions + policies on every tenant-scoped table.
--- Source of truth: SPECIFICATION.md §5.
+-- See CLAUDE.md §4.3 for the RLS rules (recursion avoidance, auth.uid() wrapping).
 --
 -- Recursion note: helpers that query `memberships` / `profiles` are marked
 -- SECURITY DEFINER so they bypass RLS on those tables when a policy on another
 -- table calls them. Without this, a policy on `tenants` that calls
 -- is_member_of() would re-enter `memberships` policies and deadlock.
+--
+-- Performance note: this file's bare `auth.uid()` calls are superseded in
+-- 0005_rls_performance.sql, which rewraps them in `(select auth.uid())` for
+-- per-statement evaluation. Don't author new policies in this style.
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Helpers

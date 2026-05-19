@@ -15,11 +15,19 @@ export type ActionResult =
   | { status: 'success'; message?: string }
   | { status: 'error'; error: string };
 
+/**
+ * Resolves a tenant + admin caller from a subdomain.
+ *
+ * Returns the user object so callers don't need a second `auth.getUser()`
+ * round-trip — `requireRole` already validated the session. The previous
+ * version of this helper discarded the user and forced every action to hit
+ * Supabase Auth a second time.
+ */
 async function loadTenant(subdomain: string) {
   const tenant = await getTenantBySlug(subdomain);
   if (!tenant) throw new Error('Workspace not found');
-  await requireRole(tenant.id, 'admin');
-  return tenant;
+  const { user } = await requireRole(tenant.id, 'admin');
+  return { tenant, user };
 }
 
 export async function inviteMemberAction(
@@ -36,27 +44,28 @@ export async function inviteMemberAction(
   }
 
   try {
-    const tenant = await loadTenant(subdomain);
+    const { tenant, user } = await loadTenant(subdomain);
     const supabase = await createClient();
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return { status: 'error', error: 'Not authenticated.' };
 
-    const { count: memberCount } = await supabase
-      .from('memberships')
-      .select('id, profiles!inner(email)', { count: 'exact', head: true })
-      .eq('tenant_id', tenant.id)
-      .eq('profiles.email', email);
+    // Two independent existence checks — run them in parallel rather than
+    // paying for two sequential round trips to Supabase.
+    const [{ count: memberCount }, { count: inviteCount }] = await Promise.all([
+      supabase
+        .from('memberships')
+        .select('id, profiles!inner(email)', { count: 'exact', head: true })
+        .eq('tenant_id', tenant.id)
+        .eq('profiles.email', email),
+      supabase
+        .from('invitations')
+        .select('id', { count: 'exact', head: true })
+        .eq('tenant_id', tenant.id)
+        .eq('email', email)
+        .is('accepted_at', null),
+    ]);
 
     if (memberCount && memberCount > 0) {
       return { status: 'error', error: 'User is already a member of this workspace.' };
     }
-
-    const { count: inviteCount } = await supabase
-      .from('invitations')
-      .select('id', { count: 'exact', head: true })
-      .eq('tenant_id', tenant.id)
-      .eq('email', email)
-      .is('accepted_at', null);
 
     if (inviteCount && inviteCount > 0) {
       return { status: 'error', error: 'An invitation has already been sent to this email address.' };
@@ -70,7 +79,7 @@ export async function inviteMemberAction(
         tenant_id: tenant.id,
         email,
         role,
-        invited_by: userData.user.id,
+        invited_by: user.id,
         token_hash: hash,
         expires_at: expiresAt,
         accepted_at: null,
@@ -99,7 +108,7 @@ export async function cancelInvitationAction(formData: FormData): Promise<void> 
   const subdomain = String(formData.get('subdomain') ?? '');
   const invitationId = String(formData.get('invitation_id') ?? '');
 
-  const tenant = await loadTenant(subdomain);
+  const { tenant } = await loadTenant(subdomain);
   const supabase = await createClient();
   await supabase.from('invitations').delete().eq('id', invitationId).eq('tenant_id', tenant.id);
 
@@ -110,10 +119,8 @@ export async function removeMemberAction(formData: FormData): Promise<void> {
   const subdomain = String(formData.get('subdomain') ?? '');
   const userId = String(formData.get('user_id') ?? '');
 
-  const tenant = await loadTenant(subdomain);
+  const { tenant } = await loadTenant(subdomain);
   const supabase = await createClient();
-  const { data: caller } = await supabase.auth.getUser();
-  if (!caller.user) return;
 
   await enforceSoleAdminRule(tenant.id, userId);
 
@@ -132,7 +139,7 @@ export async function changeRoleAction(formData: FormData): Promise<void> {
   const role = String(formData.get('role') ?? '') as 'admin' | 'member';
   if (role !== 'admin' && role !== 'member') return;
 
-  const tenant = await loadTenant(subdomain);
+  const { tenant } = await loadTenant(subdomain);
   const supabase = await createClient();
 
   // Demoting an admin to member counts as "removing an admin" for the
@@ -150,7 +157,7 @@ export async function changeRoleAction(formData: FormData): Promise<void> {
 
 /**
  * Throws if the action would leave the tenant with zero admins.
- * Per SPECIFICATION.md D3: a sole admin cannot be removed or demoted.
+ * Per CLAUDE.md §13 D3: a sole admin cannot be removed or demoted.
  */
 async function enforceSoleAdminRule(tenantId: string, targetUserId: string) {
   const supabase = await createClient();
